@@ -28,6 +28,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   const [category, setCategory] = useState(editingReco?.category || 'Strategy');
   const [description, setDescription] = useState(editingReco?.description || '');
   const [context, setContext] = useState(editingReco?.context || '');
+  const [prompt, setPrompt] = useState(editingReco?.prompt || '');
   const [priority, setPriority] = useState(editingReco?.priority || 'Medium');
   const [status, setStatus] = useState(editingReco?.status || 'Draft');
   const [tags, setTags] = useState(editingReco?.tags.join(', ') || '');
@@ -106,6 +107,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
         category,
         description,
         context,
+        prompt,
         priority,
         status,
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
@@ -309,6 +311,19 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
               rows={6}
               placeholder="Décrivez la recommandation en détail..."
               required
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Prompt pour ChatGPT
+            </label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              rows={4}
+              placeholder="Entrez un prompt personnalisé pour questionner ChatGPT et enrichir cette recommandation..."
             />
           </div>
         </div>

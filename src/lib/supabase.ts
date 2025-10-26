@@ -24,6 +24,7 @@ export interface Recommendation {
   category: string;
   description: string;
   context: string;
+  prompt: string;
   priority: string;
   status: string;
   tags: string[];
