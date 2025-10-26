@@ -5,6 +5,7 @@ import { supabase, Recommendation, Client } from '../lib/supabase';
 import { RecommendationForm } from './RecommendationForm';
 import { RecommendationList } from './RecommendationList';
 import { StatsCard } from './StatsCard';
+import { ImportButton } from './ImportButton';
 
 export const Dashboard: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -200,6 +201,7 @@ export const Dashboard: React.FC = () => {
                   </option>
                 ))}
               </select>
+              <ImportButton onImportComplete={loadData} />
               <button
                 onClick={() => {
                   setEditingReco(null);

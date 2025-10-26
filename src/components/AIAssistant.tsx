@@ -26,7 +26,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   const [error, setError] = useState('');
   const [suggestion, setSuggestion] = useState<{ title: string; description: string } | null>(null);
 
-  const handleAIRequest = async (action: 'generate' | 'improve' | 'expand') => {
+  const handleAIRequest = async (action: 'generate') => {
     setLoading(true);
     setError('');
     setSuggestion(null);
@@ -95,33 +95,15 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         Laissez ChatGPT vous aider à rédiger ou améliorer votre recommandation.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+      <div className="flex justify-center mb-4">
         <button
           type="button"
           onClick={() => handleAIRequest('generate')}
           disabled={loading}
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-blue-50 border-2 border-blue-300 text-blue-700 font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-blue-50 border-2 border-blue-300 text-blue-700 font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Wand2 className="w-5 h-5" />
           Générer
-        </button>
-        <button
-          type="button"
-          onClick={() => handleAIRequest('improve')}
-          disabled={loading || (!currentTitle && !currentDescription)}
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-blue-50 border-2 border-blue-300 text-blue-700 font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Sparkles className="w-5 h-5" />
-          Améliorer
-        </button>
-        <button
-          type="button"
-          onClick={() => handleAIRequest('expand')}
-          disabled={loading || (!currentTitle && !currentDescription)}
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-blue-50 border-2 border-blue-300 text-blue-700 font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Plus className="w-5 h-5" />
-          Enrichir
         </button>
       </div>
 
@@ -169,11 +151,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
       <div className="mt-4 text-xs text-slate-500">
         <p className="font-medium mb-1">Comment ça marche :</p>
-        <ul className="space-y-1 ml-4">
-          <li>• <strong>Générer :</strong> Crée une recommandation complète basée sur la catégorie et le contexte</li>
-          <li>• <strong>Améliorer :</strong> Optimise votre texte actuel pour le rendre plus professionnel</li>
-          <li>• <strong>Enrichir :</strong> Ajoute des exemples, métriques et étapes d'implémentation</li>
-        </ul>
+        <p className="ml-4">• <strong>Générer :</strong> Crée une recommandation complète basée sur la catégorie et le contexte</p>
       </div>
     </div>
   );

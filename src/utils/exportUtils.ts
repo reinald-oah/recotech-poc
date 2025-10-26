@@ -7,11 +7,25 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
   pptx.author = 'Recos Manager';
   pptx.title = reco.title;
 
-  const slide = pptx.addSlide();
+  const categoryColors: Record<string, string> = {
+    SEO: '10B981',
+    'Social Media': 'EC4899',
+    Content: '3B82F6',
+    Design: '8B5CF6',
+    Development: '06B6D4',
+    Strategy: 'F97316'
+  };
 
-  slide.background = { color: 'F8FAFC' };
+  const priorityColors: Record<string, string> = {
+    High: 'EF4444',
+    Medium: 'F59E0B',
+    Low: '10B981'
+  };
 
-  slide.addText(reco.title, {
+  const titleSlide = pptx.addSlide();
+  titleSlide.background = { color: 'F8FAFC' };
+
+  titleSlide.addText(reco.title, {
     x: 0.5,
     y: 0.5,
     w: 8.5,
@@ -22,7 +36,7 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
     fontFace: 'Arial'
   });
 
-  slide.addText(clientName, {
+  titleSlide.addText(clientName, {
     x: 0.5,
     y: 1.6,
     fontSize: 18,
@@ -30,16 +44,7 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
     fontFace: 'Arial'
   });
 
-  const categoryColors: Record<string, string> = {
-    SEO: '10B981',
-    'Social Media': 'EC4899',
-    Content: '3B82F6',
-    Design: '8B5CF6',
-    Development: '06B6D4',
-    Strategy: 'F97316'
-  };
-
-  slide.addShape(pptx.ShapeType.roundRect, {
+  titleSlide.addShape(pptx.ShapeType.roundRect, {
     x: 0.5,
     y: 2.1,
     w: 1.5,
@@ -48,7 +53,7 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
     line: { type: 'none' }
   });
 
-  slide.addText(reco.category, {
+  titleSlide.addText(reco.category, {
     x: 0.5,
     y: 2.1,
     w: 1.5,
@@ -61,13 +66,7 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
     fontFace: 'Arial'
   });
 
-  const priorityColors: Record<string, string> = {
-    High: 'EF4444',
-    Medium: 'F59E0B',
-    Low: '10B981'
-  };
-
-  slide.addShape(pptx.ShapeType.roundRect, {
+  titleSlide.addShape(pptx.ShapeType.roundRect, {
     x: 2.2,
     y: 2.1,
     w: 1.5,
@@ -76,7 +75,7 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
     line: { color: priorityColors[reco.priority] || '64748B', width: 2 }
   });
 
-  slide.addText(`${reco.priority} Priority`, {
+  titleSlide.addText(`${reco.priority} Priority`, {
     x: 2.2,
     y: 2.1,
     w: 1.5,
@@ -90,7 +89,7 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
   });
 
   if (reco.context) {
-    slide.addShape(pptx.ShapeType.roundRect, {
+    titleSlide.addShape(pptx.ShapeType.roundRect, {
       x: 0.5,
       y: 2.8,
       w: 8.5,
@@ -99,7 +98,7 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
       line: { type: 'none' }
     });
 
-    slide.addText('CONTEXTE', {
+    titleSlide.addText('CONTEXTE', {
       x: 0.7,
       y: 2.9,
       fontSize: 12,
@@ -108,7 +107,7 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
       fontFace: 'Arial'
     });
 
-    slide.addText(reco.context, {
+    titleSlide.addText(reco.context, {
       x: 0.7,
       y: 3.2,
       w: 8.1,
@@ -118,31 +117,9 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
     });
   }
 
-  const descriptionY = reco.context ? 4.3 : 2.8;
-
-  slide.addText('RECOMMANDATION', {
-    x: 0.5,
-    y: descriptionY,
-    fontSize: 16,
-    bold: true,
-    color: '1E293B',
-    fontFace: 'Arial'
-  });
-
-  slide.addText(reco.description, {
-    x: 0.5,
-    y: descriptionY + 0.4,
-    w: 8.5,
-    h: 2,
-    fontSize: 14,
-    color: '334155',
-    fontFace: 'Arial',
-    valign: 'top'
-  });
-
   if (reco.tags.length > 0) {
-    const tagsY = descriptionY + 2.6;
-    slide.addText('Tags: ' + reco.tags.join(' • '), {
+    const tagsY = reco.context ? 4.2 : 2.8;
+    titleSlide.addText('Tags: ' + reco.tags.join(' • '), {
       x: 0.5,
       y: tagsY,
       fontSize: 12,
@@ -150,6 +127,60 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
       fontFace: 'Arial'
     });
   }
+
+  const chapters = reco.description.split(/\n\n+/).filter(chapter => chapter.trim().length > 0);
+
+  chapters.forEach((chapter, index) => {
+    const contentSlide = pptx.addSlide();
+    contentSlide.background = { color: 'F8FAFC' };
+
+    const lines = chapter.trim().split('\n');
+    const chapterTitle = lines[0].replace(/^#+\s*/, '').replace(/^\d+\.\s*/, '').trim();
+    const chapterContent = lines.slice(1).join('\n').trim();
+
+    contentSlide.addText(chapterTitle || `Chapitre ${index + 1}`, {
+      x: 0.5,
+      y: 0.5,
+      w: 8.5,
+      h: 0.8,
+      fontSize: 28,
+      bold: true,
+      color: '1E293B',
+      fontFace: 'Arial'
+    });
+
+    contentSlide.addShape(pptx.ShapeType.rect, {
+      x: 0.5,
+      y: 1.4,
+      w: 8.5,
+      h: 0.03,
+      fill: { color: categoryColors[reco.category] || '3B82F6' },
+      line: { type: 'none' }
+    });
+
+    const content = chapterContent || chapter;
+    contentSlide.addText(content, {
+      x: 0.5,
+      y: 1.7,
+      w: 8.5,
+      h: 4.2,
+      fontSize: 16,
+      color: '334155',
+      fontFace: 'Arial',
+      valign: 'top',
+      bullet: content.includes('\n- ') || content.includes('\n• ') ? { type: 'bullet' } : false
+    });
+
+    contentSlide.addText(`${index + 1} / ${chapters.length}`, {
+      x: 8.5,
+      y: 5.2,
+      w: 0.8,
+      fontSize: 10,
+      color: '94A3B8',
+      align: 'right',
+      fontFace: 'Arial'
+    });
+  });
 
   const fileName = `${reco.title.replace(/[^a-z0-9]/gi, '_')}.pptx`;
   pptx.writeFile({ fileName });
@@ -168,17 +199,26 @@ ${reco.description}
 
 ${reco.tags.length > 0 ? 'Tags: ' + reco.tags.join(', ') : ''}`;
 
-  const blob = new Blob([canvaText], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${reco.title.replace(/[^a-z0-9]/gi, '_')}_canva.txt`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  try {
+    const blob = new Blob([canvaText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${reco.title.replace(/[^a-z0-9]/gi, '_')}_canva.txt`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
 
-  setTimeout(() => {
-    window.open('https://www.canva.com/create/', '_blank');
-  }, 500);
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    setTimeout(() => {
+      window.open('https://www.canva.com/create/', '_blank');
+    }, 500);
+  } catch (error) {
+    console.error('Error exporting to Canva:', error);
+    alert('Erreur lors de l\'exportation vers Canva');
+  }
 };
