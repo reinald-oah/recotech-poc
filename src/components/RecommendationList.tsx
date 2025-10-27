@@ -1,7 +1,7 @@
 import React from 'react';
-import { Edit2, Trash2, Calendar, User, Tag, AlertCircle, FileText, Palette } from 'lucide-react';
+import { Edit2, Trash2, Calendar, User, Tag, AlertCircle, FileText, Palette, FileDown } from 'lucide-react';
 import { Recommendation, Client } from '../lib/supabase';
-import { exportToPowerPoint, exportToCanva } from '../utils/exportUtils';
+import { exportToPowerPoint, exportToCanva, exportToPDF } from '../utils/exportUtils';
 
 interface RecommendationListProps {
   recommendations: Recommendation[];
@@ -160,6 +160,21 @@ export const RecommendationList: React.FC<RecommendationListProps> = ({
               <button
                 onClick={async () => {
                   try {
+                    await exportToPDF(reco, getClientName(reco.client_id));
+                  } catch (error) {
+                    console.error('Error exporting to PDF:', error);
+                    alert('Erreur lors de l\'export PDF. Vérifiez que votre clé API OpenAI est configurée.');
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition"
+                title="Exporter vers PDF"
+              >
+                <FileDown className="w-4 h-4" />
+                PDF
+              </button>
+              <button
+                onClick={async () => {
+                  try {
                     await exportToPowerPoint(reco, getClientName(reco.client_id));
                   } catch (error) {
                     console.error('Error exporting to PowerPoint:', error);
@@ -173,12 +188,19 @@ export const RecommendationList: React.FC<RecommendationListProps> = ({
                 PowerPoint
               </button>
               <button
-                onClick={() => exportToCanva(reco, getClientName(reco.client_id))}
+                onClick={async () => {
+                  try {
+                    await exportToCanva(reco, getClientName(reco.client_id));
+                  } catch (error) {
+                    console.error('Error exporting to PSD:', error);
+                    alert('Erreur lors de l\'export PSD. Vérifiez que votre clé API OpenAI est configurée.');
+                  }
+                }}
                 className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition"
-                title="Exporter vers Canva"
+                title="Exporter vers PSD (Photoshop)"
               >
                 <Palette className="w-4 h-4" />
-                Canva
+                PSD
               </button>
             </div>
           </div>

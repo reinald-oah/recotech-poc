@@ -1,4 +1,6 @@
 import PptxGenJS from 'pptxgenjs';
+import { jsPDF } from 'jspdf';
+import { writePsd } from 'ag-psd';
 import { Recommendation, Client } from '../lib/supabase';
 import { parseDescriptionIntoChapters } from '../lib/openai';
 
@@ -341,25 +343,270 @@ export const exportToPowerPoint = async (reco: Recommendation, clientName: strin
   pptx.writeFile({ fileName });
 };
 
-export const exportToCanva = (reco: Recommendation, clientName: string) => {
-  const canvaText = `${reco.title}
+export const exportToPDF = async (reco: Recommendation, clientName: string) => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const maxWidth = pageWidth - 2 * margin;
 
-Client: ${clientName}
-Catégorie: ${reco.category}
-Priorité: ${reco.priority}
-${reco.context ? '\nContexte:\n' + reco.context : ''}
+  const categoryColors: Record<string, [number, number, number]> = {
+    SEO: [16, 185, 129],
+    'Social Media': [236, 72, 153],
+    Content: [59, 130, 246],
+    Design: [139, 92, 246],
+    Development: [6, 182, 212],
+    Strategy: [249, 115, 22]
+  };
 
-Recommandation:
-${reco.description}
+  const priorityColors: Record<string, [number, number, number]> = {
+    High: [239, 68, 68],
+    Medium: [245, 158, 11],
+    Low: [16, 185, 129]
+  };
 
-${reco.tags.length > 0 ? 'Tags: ' + reco.tags.join(', ') : ''}`;
+  doc.setFillColor(248, 250, 252);
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 41, 59);
+  doc.text(reco.title, margin, 30, { maxWidth });
+
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 116, 139);
+  doc.text(clientName, margin, 45);
+
+  const categoryColor = categoryColors[reco.category] || [100, 116, 139];
+  doc.setFillColor(...categoryColor);
+  doc.roundedRect(margin, 55, 40, 8, 2, 2, 'F');
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text(reco.category, margin + 20, 61, { align: 'center' });
+
+  const priorityColor = priorityColors[reco.priority] || [100, 116, 139];
+  doc.setDrawColor(...priorityColor);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(margin + 45, 55, 40, 8, 2, 2);
+  doc.setTextColor(...priorityColor);
+  doc.text(`${reco.priority} Priority`, margin + 65, 61, { align: 'center' });
+
+  let currentY = 75;
+
+  if (reco.context) {
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, currentY, maxWidth, 20, 2, 2, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(71, 85, 105);
+    doc.text('CONTEXTE', margin + 3, currentY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+    doc.setFontSize(10);
+    const contextLines = doc.splitTextToSize(reco.context, maxWidth - 6);
+    doc.text(contextLines, margin + 3, currentY + 12);
+    currentY += 30;
+  }
+
+  if (reco.tags.length > 0) {
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Tags: ' + reco.tags.join(' • '), margin, currentY);
+    currentY += 10;
+  }
 
   try {
-    const blob = new Blob([canvaText], { type: 'text/plain;charset=utf-8' });
+    const chapters = await parseDescriptionIntoChapters(reco.description);
+
+    if (chapters && chapters.length > 0) {
+      for (let i = 0; i < chapters.length; i++) {
+        const chapter = chapters[i];
+
+        if (i > 0 || currentY > 100) {
+          doc.addPage();
+          currentY = 20;
+          doc.setFillColor(248, 250, 252);
+          doc.rect(0, 0, pageWidth, pageHeight, 'F');
+        }
+
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 41, 59);
+        const titleLines = doc.splitTextToSize(chapter.title, maxWidth);
+        doc.text(titleLines, margin, currentY);
+        currentY += titleLines.length * 8 + 5;
+
+        const categoryColor = categoryColors[reco.category] || [59, 130, 246];
+        doc.setDrawColor(...categoryColor);
+        doc.setLineWidth(0.5);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        currentY += 8;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 65, 85);
+
+        if (chapter.content) {
+          const contentLines = doc.splitTextToSize(chapter.content, maxWidth);
+          for (let j = 0; j < contentLines.length; j++) {
+            if (currentY > pageHeight - 30) {
+              doc.addPage();
+              currentY = 20;
+              doc.setFillColor(248, 250, 252);
+              doc.rect(0, 0, pageWidth, pageHeight, 'F');
+            }
+            doc.text(contentLines[j], margin, currentY);
+            currentY += 6;
+          }
+        }
+
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(`${i + 1} / ${chapters.length}`, pageWidth - margin - 10, pageHeight - 10);
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing chapters with AI, using simple split:', error);
+
+    const description = reco.description;
+    const paragraphs = description.split(/\n\n+/).filter(p => p.trim().length > 0);
+
+    doc.addPage();
+    currentY = 20;
+    doc.setFillColor(248, 250, 252);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 65, 85);
+
+    for (const para of paragraphs) {
+      const lines = doc.splitTextToSize(para, maxWidth);
+      for (const line of lines) {
+        if (currentY > pageHeight - 30) {
+          doc.addPage();
+          currentY = 20;
+          doc.setFillColor(248, 250, 252);
+          doc.rect(0, 0, pageWidth, pageHeight, 'F');
+        }
+        doc.text(line, margin, currentY);
+        currentY += 6;
+      }
+      currentY += 4;
+    }
+  }
+
+  const pdfFileName = `${reco.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+  doc.save(pdfFileName);
+};
+
+export const exportToCanva = async (reco: Recommendation, clientName: string) => {
+  try {
+    const chapters = await parseDescriptionIntoChapters(reco.description);
+
+    const width = 1920;
+    const height = 1080;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('Could not get canvas context');
+    }
+
+    const createTextLayer = (text: string, y: number, fontSize: number, layerName: string) => {
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#1E293B';
+      ctx.font = `${fontSize}px Arial`;
+      ctx.textBaseline = 'top';
+
+      const lines: string[] = [];
+      const maxWidth = width - 100;
+      const words = text.split(' ');
+      let currentLine = '';
+
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+
+      lines.forEach((line, i) => {
+        ctx.fillText(line, 50, y + i * (fontSize + 10));
+      });
+
+      const imageData = ctx.getImageData(0, 0, width, height);
+      return {
+        name: layerName,
+        canvas: imageData,
+        opacity: 255,
+        blendMode: 'normal'
+      };
+    };
+
+    const layers: any[] = [];
+
+    ctx.fillStyle = '#F8FAFC';
+    ctx.fillRect(0, 0, width, height);
+    const bgImageData = ctx.getImageData(0, 0, width, height);
+    layers.push({
+      name: 'Background',
+      canvas: bgImageData,
+      opacity: 255,
+      blendMode: 'normal'
+    });
+
+    layers.push(createTextLayer(reco.title, 50, 48, 'Title'));
+    layers.push(createTextLayer(clientName, 120, 28, 'Client'));
+    layers.push(createTextLayer(`${reco.category} • ${reco.priority} Priority`, 160, 20, 'Metadata'));
+
+    if (reco.context) {
+      layers.push(createTextLayer(`Context: ${reco.context}`, 210, 18, 'Context'));
+    }
+
+    if (chapters && chapters.length > 0) {
+      let yPos = reco.context ? 300 : 250;
+      chapters.forEach((chapter, index) => {
+        layers.push(createTextLayer(chapter.title, yPos, 32, `Chapter ${index + 1} Title`));
+        yPos += 60;
+
+        if (chapter.content) {
+          layers.push(createTextLayer(chapter.content, yPos, 18, `Chapter ${index + 1} Content`));
+          yPos += 150;
+        }
+      });
+    } else {
+      layers.push(createTextLayer(reco.description, 250, 18, 'Description'));
+    }
+
+    if (reco.tags.length > 0) {
+      layers.push(createTextLayer('Tags: ' + reco.tags.join(', '), height - 100, 16, 'Tags'));
+    }
+
+    const psd = {
+      width,
+      height,
+      channels: 3,
+      bitsPerChannel: 8,
+      colorMode: 3,
+      children: layers
+    };
+
+    const buffer = writePsd(psd);
+    const blob = new Blob([buffer], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${reco.title.replace(/[^a-z0-9]/gi, '_')}_canva.txt`;
+    link.download = `${reco.title.replace(/[^a-z0-9]/gi, '_')}.psd`;
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
@@ -369,11 +616,8 @@ ${reco.tags.length > 0 ? 'Tags: ' + reco.tags.join(', ') : ''}`;
       URL.revokeObjectURL(url);
     }, 100);
 
-    setTimeout(() => {
-      window.open('https://www.canva.com/create/', '_blank');
-    }, 500);
   } catch (error) {
-    console.error('Error exporting to Canva:', error);
-    alert('Erreur lors de l\'exportation vers Canva');
+    console.error('Error exporting to PSD:', error);
+    alert('Erreur lors de l\'exportation vers PSD. Vérifiez que votre clé API OpenAI est configurée.');
   }
 };
