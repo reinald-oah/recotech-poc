@@ -103,7 +103,7 @@ export const exportToPowerPoint = async (reco: Recommendation, clientName: strin
 
     titleSlide.addText('CONTEXTE', {
       x: 0.7,
-      y: 2.9,
+      y: 2.95,
       fontSize: 12,
       bold: true,
       color: '475569',
@@ -112,11 +112,13 @@ export const exportToPowerPoint = async (reco: Recommendation, clientName: strin
 
     titleSlide.addText(reco.context, {
       x: 0.7,
-      y: 3.2,
+      y: 3.3,
       w: 8.1,
+      h: 0.6,
       fontSize: 14,
       color: '334155',
-      fontFace: 'Arial'
+      fontFace: 'Arial',
+      valign: 'top'
     });
   }
 
@@ -424,12 +426,11 @@ export const exportToPDF = async (reco: Recommendation, clientName: string) => {
       for (let i = 0; i < chapters.length; i++) {
         const chapter = chapters[i];
 
-        if (i > 0 || currentY > 100) {
-          doc.addPage();
-          currentY = 20;
-          doc.setFillColor(248, 250, 252);
-          doc.rect(0, 0, pageWidth, pageHeight, 'F');
-        }
+        // Always start each chapter on a new page
+        doc.addPage();
+        currentY = 20;
+        doc.setFillColor(248, 250, 252);
+        doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
@@ -598,11 +599,11 @@ export const exportToCanva = async (reco: Recommendation, clientName: string) =>
       let yPos = reco.context ? 300 : 250;
       chapters.forEach((chapter, index) => {
         layers.push(createTextLayer(chapter.title, yPos, 32, `Chapter ${index + 1} Title`));
-        yPos += 60;
+        yPos += 80;
 
         if (chapter.content) {
           layers.push(createTextLayer(chapter.content, yPos, 18, `Chapter ${index + 1} Content`));
-          yPos += 150;
+          yPos += 250;
         }
       });
     } else {
