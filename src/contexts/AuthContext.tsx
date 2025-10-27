@@ -63,12 +63,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
 
     if (error) throw error;
+
+    if (data.user) {
+      const { data: teamMember } = await supabase
+        .from('team_members')
+        .select('active')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (teamMember && !teamMember.active) {
+        await supabase.auth.signOut();
+        throw new Error('Your account has been deactivated. Please contact an administrator.');
+      }
+    }
   };
 
   const signOut = async () => {
