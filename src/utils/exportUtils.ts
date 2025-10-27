@@ -128,99 +128,137 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
     });
   }
 
-  const chapters = reco.description.split(/\n\n+/).filter(chapter => chapter.trim().length > 0);
+  const description = reco.description;
+  const chapterMatches = description.match(/(\d+)\.\s+([^\n]+)(?:\n([^]*?))?(?=\n\d+\.\s+|\n*$)/g);
 
-  chapters.forEach((chapter, index) => {
-    const contentSlide = pptx.addSlide();
-    contentSlide.background = { color: 'F8FAFC' };
+  if (chapterMatches && chapterMatches.length > 0) {
+    chapterMatches.forEach((chapterText, index) => {
+      const contentSlide = pptx.addSlide();
+      contentSlide.background = { color: 'F8FAFC' };
 
-    const lines = chapter.trim().split('\n');
-    const chapterTitle = lines[0].replace(/^#+\s*/, '').replace(/^\d+\.\s*/, '').trim();
-    const chapterContent = lines.slice(1).join('\n').trim();
+      const titleMatch = chapterText.match(/^(\d+)\.\s+(.+?)$/m);
+      const chapterNumber = titleMatch ? titleMatch[1] : (index + 1).toString();
+      const chapterTitle = titleMatch ? titleMatch[2].trim() : `Chapitre ${index + 1}`;
 
-    contentSlide.addText(chapterTitle || `Chapitre ${index + 1}`, {
-      x: 0.5,
-      y: 0.5,
-      w: 8.5,
-      fontSize: 28,
-      bold: true,
-      color: '1E293B',
-      fontFace: 'Arial',
-      wrap: true
-    });
+      const contentStart = chapterText.indexOf('\n');
+      const chapterContent = contentStart > -1 ? chapterText.substring(contentStart).trim() : '';
 
-    contentSlide.addShape(pptx.ShapeType.rect, {
-      x: 0.5,
-      y: 1.4,
-      w: 8.5,
-      h: 0.03,
-      fill: { color: categoryColors[reco.category] || '3B82F6' },
-      line: { type: 'none' }
-    });
-
-    const content = chapterContent || chapter;
-    const bulletPoints = content.split(/\n[-•*]\s+/).filter(p => p.trim().length > 0);
-
-    if (bulletPoints.length > 1) {
-      const bulletText = bulletPoints.map((point, i) => {
-        return {
-          text: point.trim(),
-          options: {
-            bullet: true,
-            breakLine: i < bulletPoints.length - 1
-          }
-        };
-      });
-
-      contentSlide.addText(bulletText, {
+      contentSlide.addText(`${chapterNumber}. ${chapterTitle}`, {
         x: 0.5,
-        y: 1.7,
+        y: 0.4,
         w: 8.5,
-        h: 3.8,
-        fontSize: 14,
-        color: '334155',
-        fontFace: 'Arial',
-        valign: 'top',
-        lineSpacing: 24
+        fontSize: 26,
+        bold: true,
+        color: '1E293B',
+        fontFace: 'Arial'
       });
-    } else {
-      const paragraphs = content.split(/\n+/).filter(p => p.trim().length > 0);
-      let currentY = 1.7;
-      const lineHeight = 0.3;
-      const maxY = 5.0;
 
-      paragraphs.forEach((para) => {
-        if (currentY < maxY) {
-          const estimatedLines = Math.ceil(para.length / 80);
-          const paraHeight = estimatedLines * lineHeight;
+      contentSlide.addShape(pptx.ShapeType.rect, {
+        x: 0.5,
+        y: 1.1,
+        w: 8.5,
+        h: 0.02,
+        fill: { color: categoryColors[reco.category] || '3B82F6' },
+        line: { type: 'none' }
+      });
 
-          contentSlide.addText(para.trim(), {
-            x: 0.5,
-            y: currentY,
-            w: 8.5,
-            h: paraHeight,
-            fontSize: 14,
+      if (chapterContent) {
+        const bulletMatch = chapterContent.match(/[-•*]\s+.+/g);
+
+        if (bulletMatch) {
+          const bullets = bulletMatch.map(b => b.replace(/^[-•*]\s+/, '').trim());
+          const bulletData = bullets.map(bullet => ({
+            text: bullet,
+            options: { bullet: true }
+          }));
+
+          contentSlide.addText(bulletData, {
+            x: 0.7,
+            y: 1.5,
+            w: 8.1,
+            fontSize: 13,
             color: '334155',
             fontFace: 'Arial',
-            valign: 'top',
-            wrap: true
+            lineSpacing: 18
           });
+        } else {
+          const cleanContent = chapterContent.replace(/\n+/g, '\n\n');
 
-          currentY += paraHeight + 0.2;
+          contentSlide.addText(cleanContent, {
+            x: 0.7,
+            y: 1.5,
+            w: 8.1,
+            fontSize: 13,
+            color: '334155',
+            fontFace: 'Arial',
+            lineSpacing: 16
+          });
         }
-      });
-    }
+      }
 
-    contentSlide.addText(`${index + 1} / ${chapters.length}`, {
-      x: 8.5,
-      y: 5.2,
-      w: 0.8,
-      fontSize: 10,
-      color: '94A3B8',
-      align: 'right',
-      fontFace: 'Arial'
+      contentSlide.addText(`${index + 1} / ${chapterMatches.length}`, {
+        x: 8.3,
+        y: 5.1,
+        w: 0.7,
+        fontSize: 9,
+        color: '94A3B8',
+        align: 'right',
+        fontFace: 'Arial'
+      });
     });
-  });
+  } else {
+    const chapters = description.split(/\n\n+/).filter(c => c.trim().length > 0);
+
+    chapters.forEach((chapter, index) => {
+      const contentSlide = pptx.addSlide();
+      contentSlide.background = { color: 'F8FAFC' };
+
+      const lines = chapter.trim().split('\n');
+      const title = lines[0].replace(/^#+\s*/, '').trim();
+      const content = lines.slice(1).join('\n').trim();
+
+      contentSlide.addText(title || `Section ${index + 1}`, {
+        x: 0.5,
+        y: 0.4,
+        w: 8.5,
+        fontSize: 26,
+        bold: true,
+        color: '1E293B',
+        fontFace: 'Arial'
+      });
+
+      contentSlide.addShape(pptx.ShapeType.rect, {
+        x: 0.5,
+        y: 1.1,
+        w: 8.5,
+        h: 0.02,
+        fill: { color: categoryColors[reco.category] || '3B82F6' },
+        line: { type: 'none' }
+      });
+
+      if (content) {
+        contentSlide.addText(content, {
+          x: 0.7,
+          y: 1.5,
+          w: 8.1,
+          fontSize: 13,
+          color: '334155',
+          fontFace: 'Arial',
+          lineSpacing: 16
+        });
+      }
+
+      contentSlide.addText(`${index + 1} / ${chapters.length}`, {
+        x: 8.3,
+        y: 5.1,
+        w: 0.7,
+        fontSize: 9,
+        color: '94A3B8',
+        align: 'right',
+        fontFace: 'Arial'
+      });
+    });
+  }
 
   const fileName = `${reco.title.replace(/[^a-z0-9]/gi, '_')}.pptx`;
   pptx.writeFile({ fileName });
