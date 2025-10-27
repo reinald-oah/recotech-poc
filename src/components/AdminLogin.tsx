@@ -16,7 +16,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
     if (username === 'admin' && password === 'adminrecotech') {
       onLogin();
     } else {
-      setError('Invalid credentials');
+      setError('Identifiants invalides');
     }
   };
 
@@ -28,12 +28,12 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
             <Lock className="w-8 h-8 text-white" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-center mb-6 text-slate-900">Admin Access</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 text-slate-900">Accès Administrateur</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-1">
-              Username
+              Nom d'utilisateur
             </label>
             <input
               id="username"
@@ -47,7 +47,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
-              Password
+              Mot de passe
             </label>
             <input
               id="password"
@@ -67,7 +67,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
             type="submit"
             className="w-full bg-slate-900 text-white py-2 px-4 rounded-md hover:bg-slate-800 transition-colors"
           >
-            Login
+            Se connecter
           </button>
         </form>
       </div>
