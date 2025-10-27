@@ -5,8 +5,8 @@ import { getAIAssistance, AIAssistRequest } from '../lib/openai';
 interface AIAssistantProps {
   category: string;
   context: string;
+  prompt: string;
   currentTitle: string;
-  currentDescription: string;
   clientName?: string;
   industry?: string;
   onApply: (title: string, description: string) => void;
@@ -15,8 +15,8 @@ interface AIAssistantProps {
 export const AIAssistant: React.FC<AIAssistantProps> = ({
   category,
   context,
+  prompt,
   currentTitle,
-  currentDescription,
   clientName,
   industry,
   onApply
@@ -36,8 +36,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         action,
         category,
         context,
+        prompt,
         currentTitle,
-        currentDescription,
         clientName,
         industry
       };

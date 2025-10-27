@@ -332,8 +332,8 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           <AIAssistant
             category={category}
             context={context}
+            prompt={prompt}
             currentTitle={title}
-            currentDescription={description}
             clientName={getSelectedClient()?.name}
             industry={getSelectedClient()?.industry}
             onApply={handleAIApply}

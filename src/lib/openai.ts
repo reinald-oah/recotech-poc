@@ -2,8 +2,8 @@ export interface AIAssistRequest {
   action: 'generate' | 'improve' | 'expand';
   category?: string;
   context?: string;
+  prompt?: string;
   currentTitle?: string;
-  currentDescription?: string;
   clientName?: string;
   industry?: string;
 }
@@ -25,6 +25,7 @@ Catégorie: ${request.category}
 ${request.clientName ? `Client: ${request.clientName}` : ''}
 ${request.industry ? `Secteur: ${request.industry}` : ''}
 ${request.context ? `Contexte: ${request.context}` : ''}
+${request.prompt ? `Instructions spécifiques: ${request.prompt}` : ''}
 
 Fournis une réponse au format JSON avec:
 - title: un titre court et percutant (max 80 caractères)
@@ -37,8 +38,8 @@ La recommandation doit être professionnelle, spécifique et actionnable.`;
       prompt = `Tu es un consultant en marketing digital expert. Améliore cette recommandation pour la rendre plus professionnelle et impactante.
 
 Titre actuel: ${request.currentTitle}
-Description actuelle: ${request.currentDescription}
 ${request.context ? `Contexte: ${request.context}` : ''}
+${request.prompt ? `Instructions spécifiques: ${request.prompt}` : ''}
 
 Fournis une réponse au format JSON avec:
 - title: un titre amélioré (max 80 caractères)
@@ -51,18 +52,18 @@ Améliore la clarté, la structure et ajoute des détails pertinents.`;
       prompt = `Tu es un consultant en marketing digital expert. Enrichis cette recommandation avec du contenu additionnel pertinent.
 
 Titre: ${request.currentTitle}
-Description actuelle: ${request.currentDescription}
 ${request.context ? `Contexte: ${request.context}` : ''}
+${request.prompt ? `Instructions spécifiques: ${request.prompt}` : ''}
 
 Fournis une réponse au format JSON avec:
 - title: le même titre ou légèrement amélioré
-- description: la description originale enrichie avec:
+- description: une description enrichie avec:
   * Des exemples concrets
   * Des métriques ou KPIs à suivre
   * Des étapes d'implémentation
   * Des best practices
 
-Garde la structure existante mais ajoute du contenu de valeur.`;
+Ajoute du contenu de valeur.`;
       break;
   }
 
