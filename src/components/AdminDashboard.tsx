@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Users, FileText, LogOut } from 'lucide-react';
+import { Trash2, Users, FileText, LogOut, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Recommendation {
@@ -7,6 +7,7 @@ interface Recommendation {
   title: string;
   category: string;
   status: string;
+  description: string;
   created_at: string;
   client_id: string;
   clients?: {
@@ -32,6 +33,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'recommendations' | 'team'>('recommendations');
+  const [expandedRecs, setExpandedRecs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadData();
@@ -95,6 +97,23 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         m.id === memberId ? { ...m, active: !currentActive } : m
       ));
     }
+  };
+
+  const toggleExpanded = (recId: string) => {
+    setExpandedRecs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(recId)) {
+        newSet.delete(recId);
+      } else {
+        newSet.add(recId);
+      }
+      return newSet;
+    });
+  };
+
+  const truncateText = (text: string, maxLength: number = 150) => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   };
 
   if (loading) {
@@ -163,36 +182,67 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   Aucune recommandation trouvée
                 </div>
               ) : (
-                recommendations.map((rec) => (
-                  <div key={rec.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-slate-900">{rec.title}</h3>
-                      <div className="mt-1 flex items-center gap-4 text-sm text-slate-600">
-                        <span className="font-medium">{rec.clients?.name}</span>
-                        <span className="px-2 py-1 bg-slate-100 rounded text-xs">
-                          {rec.category}
-                        </span>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          rec.status === 'Published' ? 'bg-green-100 text-green-800' :
-                          rec.status === 'Draft' ? 'bg-slate-100 text-slate-800' :
-                          'bg-amber-100 text-amber-800'
-                        }`}>
-                          {rec.status}
-                        </span>
-                        <span className="text-xs">
-                          {new Date(rec.created_at).toLocaleDateString()}
-                        </span>
+                recommendations.map((rec) => {
+                  const isExpanded = expandedRecs.has(rec.id);
+                  return (
+                    <div key={rec.id} className="px-6 py-4 hover:bg-slate-50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-slate-900">{rec.title}</h3>
+                          <div className="mt-1 flex items-center gap-4 text-sm text-slate-600">
+                            <span className="font-medium">{rec.clients?.name}</span>
+                            <span className="px-2 py-1 bg-slate-100 rounded text-xs">
+                              {rec.category}
+                            </span>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              rec.status === 'Published' ? 'bg-green-100 text-green-800' :
+                              rec.status === 'Draft' ? 'bg-slate-100 text-slate-800' :
+                              'bg-amber-100 text-amber-800'
+                            }`}>
+                              {rec.status}
+                            </span>
+                            <span className="text-xs">
+                              {new Date(rec.created_at).toLocaleDateString('fr-FR')}
+                            </span>
+                          </div>
+
+                          {rec.description && (
+                            <div className="mt-3">
+                              <p className="text-sm text-slate-600">
+                                {isExpanded ? rec.description : truncateText(rec.description)}
+                              </p>
+                              {rec.description.length > 150 && (
+                                <button
+                                  onClick={() => toggleExpanded(rec.id)}
+                                  className="mt-2 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                                >
+                                  {isExpanded ? (
+                                    <>
+                                      <ChevronUp className="w-4 h-4" />
+                                      Réduire
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDown className="w-4 h-4" />
+                                      Voir plus
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleDeleteRecommendation(rec.id)}
+                          className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                          title="Supprimer la recommandation"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteRecommendation(rec.id)}
-                      className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                      title="Supprimer la recommandation"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
