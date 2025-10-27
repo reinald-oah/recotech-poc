@@ -142,11 +142,11 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
       x: 0.5,
       y: 0.5,
       w: 8.5,
-      h: 0.8,
       fontSize: 28,
       bold: true,
       color: '1E293B',
-      fontFace: 'Arial'
+      fontFace: 'Arial',
+      wrap: true
     });
 
     contentSlide.addShape(pptx.ShapeType.rect, {
@@ -159,17 +159,57 @@ export const exportToPowerPoint = (reco: Recommendation, clientName: string) => 
     });
 
     const content = chapterContent || chapter;
-    contentSlide.addText(content, {
-      x: 0.5,
-      y: 1.7,
-      w: 8.5,
-      h: 4.2,
-      fontSize: 16,
-      color: '334155',
-      fontFace: 'Arial',
-      valign: 'top',
-      bullet: content.includes('\n- ') || content.includes('\n• ') ? { type: 'bullet' } : false
-    });
+    const bulletPoints = content.split(/\n[-•*]\s+/).filter(p => p.trim().length > 0);
+
+    if (bulletPoints.length > 1) {
+      const bulletText = bulletPoints.map((point, i) => {
+        return {
+          text: point.trim(),
+          options: {
+            bullet: true,
+            breakLine: i < bulletPoints.length - 1
+          }
+        };
+      });
+
+      contentSlide.addText(bulletText, {
+        x: 0.5,
+        y: 1.7,
+        w: 8.5,
+        h: 3.8,
+        fontSize: 14,
+        color: '334155',
+        fontFace: 'Arial',
+        valign: 'top',
+        lineSpacing: 24
+      });
+    } else {
+      const paragraphs = content.split(/\n+/).filter(p => p.trim().length > 0);
+      let currentY = 1.7;
+      const lineHeight = 0.3;
+      const maxY = 5.0;
+
+      paragraphs.forEach((para) => {
+        if (currentY < maxY) {
+          const estimatedLines = Math.ceil(para.length / 80);
+          const paraHeight = estimatedLines * lineHeight;
+
+          contentSlide.addText(para.trim(), {
+            x: 0.5,
+            y: currentY,
+            w: 8.5,
+            h: paraHeight,
+            fontSize: 14,
+            color: '334155',
+            fontFace: 'Arial',
+            valign: 'top',
+            wrap: true
+          });
+
+          currentY += paraHeight + 0.2;
+        }
+      });
+    }
 
     contentSlide.addText(`${index + 1} / ${chapters.length}`, {
       x: 8.5,
