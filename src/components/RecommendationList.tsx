@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Edit2, Trash2, Calendar, User, Tag, AlertCircle, FileText, Palette, FileDown } from 'lucide-react';
 import { Recommendation, Client } from '../lib/supabase';
 import { exportToPowerPoint, exportToCanva, exportToPDF } from '../utils/exportUtils';
@@ -16,6 +16,9 @@ export const RecommendationList: React.FC<RecommendationListProps> = ({
   onEdit,
   onDelete
 }) => {
+  const [exportingId, setExportingId] = useState<string | null>(null);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportType, setExportType] = useState('');
   const getClientName = (clientId: string) => {
     const client = clients.find((c) => c.id === clientId);
     return client ? client.name : 'Client non spécifié';
@@ -160,47 +163,101 @@ export const RecommendationList: React.FC<RecommendationListProps> = ({
               <button
                 onClick={async () => {
                   try {
+                    setExportingId(reco.id);
+                    setExportType('PDF');
+                    setExportProgress(0);
+                    setExportProgress(30);
                     await exportToPDF(reco, getClientName(reco.client_id));
+                    setExportProgress(100);
+                    setTimeout(() => {
+                      setExportingId(null);
+                      setExportProgress(0);
+                    }, 500);
                   } catch (error) {
                     console.error('Error exporting to PDF:', error);
                     alert('Erreur lors de l\'export PDF. Vérifiez que votre clé API OpenAI est configurée.');
+                    setExportingId(null);
+                    setExportProgress(0);
                   }
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition"
+                disabled={exportingId === reco.id}
+                className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
                 title="Exporter vers PDF"
               >
-                <FileDown className="w-4 h-4" />
-                PDF
+                {exportingId === reco.id && exportType === 'PDF' && (
+                  <div
+                    className="absolute inset-0 bg-red-800 transition-all duration-300"
+                    style={{ width: `${exportProgress}%` }}
+                  />
+                )}
+                <FileDown className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">PDF</span>
               </button>
               <button
                 onClick={async () => {
                   try {
+                    setExportingId(reco.id);
+                    setExportType('PPT');
+                    setExportProgress(0);
+                    setExportProgress(30);
                     await exportToPowerPoint(reco, getClientName(reco.client_id));
+                    setExportProgress(100);
+                    setTimeout(() => {
+                      setExportingId(null);
+                      setExportProgress(0);
+                    }, 500);
                   } catch (error) {
                     console.error('Error exporting to PowerPoint:', error);
                     alert('Erreur lors de l\'export PowerPoint. Vérifiez que votre clé API OpenAI est configurée.');
+                    setExportingId(null);
+                    setExportProgress(0);
                   }
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition"
+                disabled={exportingId === reco.id}
+                className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
                 title="Exporter vers PowerPoint"
               >
-                <FileText className="w-4 h-4" />
-                PowerPoint
+                {exportingId === reco.id && exportType === 'PPT' && (
+                  <div
+                    className="absolute inset-0 bg-orange-800 transition-all duration-300"
+                    style={{ width: `${exportProgress}%` }}
+                  />
+                )}
+                <FileText className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">PowerPoint</span>
               </button>
               <button
                 onClick={async () => {
                   try {
+                    setExportingId(reco.id);
+                    setExportType('Canva');
+                    setExportProgress(0);
+                    setExportProgress(30);
                     await exportToCanva(reco, getClientName(reco.client_id));
+                    setExportProgress(100);
+                    setTimeout(() => {
+                      setExportingId(null);
+                      setExportProgress(0);
+                    }, 500);
                   } catch (error) {
-                    console.error('Error exporting to PSD:', error);
-                    alert('Erreur lors de l\'export PSD. Vérifiez que votre clé API OpenAI est configurée.');
+                    console.error('Error exporting to Canva:', error);
+                    alert('Erreur lors de l\'export Canva. Vérifiez que votre clé API OpenAI est configurée.');
+                    setExportingId(null);
+                    setExportProgress(0);
                   }
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition"
-                title="Exporter vers PSD (Photoshop)"
+                disabled={exportingId === reco.id}
+                className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+                title="Exporter vers Canva (PSD)"
               >
-                <Palette className="w-4 h-4" />
-                PSD
+                {exportingId === reco.id && exportType === 'Canva' && (
+                  <div
+                    className="absolute inset-0 bg-purple-800 transition-all duration-300"
+                    style={{ width: `${exportProgress}%` }}
+                  />
+                )}
+                <Palette className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">Canva</span>
               </button>
             </div>
           </div>
