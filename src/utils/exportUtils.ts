@@ -552,10 +552,16 @@ export const exportToCanva = async (reco: Recommendation, clientName: string) =>
         ctx.fillText(line, 50, y + i * (fontSize + 10));
       });
 
-      const imageData = ctx.getImageData(0, 0, width, height);
+      // Create a new canvas for this layer
+      const layerCanvas = document.createElement('canvas');
+      layerCanvas.width = width;
+      layerCanvas.height = height;
+      const layerCtx = layerCanvas.getContext('2d')!;
+      layerCtx.putImageData(ctx.getImageData(0, 0, width, height), 0, 0);
+
       return {
         name: layerName,
-        canvas: imageData,
+        canvas: layerCanvas,
         opacity: 255,
         blendMode: 'normal'
       };
@@ -565,10 +571,17 @@ export const exportToCanva = async (reco: Recommendation, clientName: string) =>
 
     ctx.fillStyle = '#F8FAFC';
     ctx.fillRect(0, 0, width, height);
-    const bgImageData = ctx.getImageData(0, 0, width, height);
+
+    // Create canvas for background layer
+    const bgCanvas = document.createElement('canvas');
+    bgCanvas.width = width;
+    bgCanvas.height = height;
+    const bgCtx = bgCanvas.getContext('2d')!;
+    bgCtx.putImageData(ctx.getImageData(0, 0, width, height), 0, 0);
+
     layers.push({
       name: 'Background',
-      canvas: bgImageData,
+      canvas: bgCanvas,
       opacity: 255,
       blendMode: 'normal'
     });
@@ -626,6 +639,7 @@ export const exportToCanva = async (reco: Recommendation, clientName: string) =>
 
   } catch (error) {
     console.error('Error exporting to PSD:', error);
-    alert('Erreur lors de l\'exportation vers PSD. Vérifiez que votre clé API OpenAI est configurée.');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    alert(`Erreur lors de l'exportation vers PSD: ${errorMessage}`);
   }
 };
