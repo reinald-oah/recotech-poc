@@ -504,6 +504,14 @@ export const exportToPDF = async (reco: Recommendation, clientName: string) => {
 
 export const exportToCanva = async (reco: Recommendation, clientName: string) => {
   try {
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    console.log('API Key check:', apiKey ? 'Present' : 'Missing');
+
+    if (!apiKey) {
+      alert('Clé API OpenAI manquante. Vérifiez que VITE_OPENAI_API_KEY est configuré dans le fichier .env et redémarrez le serveur de développement.');
+      throw new Error('Clé API OpenAI non configurée');
+    }
+
     const chapters = await parseDescriptionIntoChapters(reco.description);
 
     const width = 1920;
