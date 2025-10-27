@@ -158,7 +158,14 @@ export const RecommendationList: React.FC<RecommendationListProps> = ({
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => exportToPowerPoint(reco, getClientName(reco.client_id))}
+                onClick={async () => {
+                  try {
+                    await exportToPowerPoint(reco, getClientName(reco.client_id));
+                  } catch (error) {
+                    console.error('Error exporting to PowerPoint:', error);
+                    alert('Erreur lors de l\'export PowerPoint. Vérifiez que votre clé API OpenAI est configurée.');
+                  }
+                }}
                 className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition"
                 title="Exporter vers PowerPoint"
               >
