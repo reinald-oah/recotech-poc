@@ -7,7 +7,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 
 function AppContent() {
   const { user, loading } = useAuth();
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
   if (loading) {
@@ -18,17 +18,17 @@ function AppContent() {
     );
   }
 
-  if (window.location.pathname === '/admin') {
+  if (showAdmin) {
     if (!isAdminLoggedIn) {
       return <AdminLogin onLogin={() => setIsAdminLoggedIn(true)} />;
     }
     return <AdminDashboard onLogout={() => {
       setIsAdminLoggedIn(false);
-      window.location.pathname = '/';
+      setShowAdmin(false);
     }} />;
   }
 
-  return user ? <Dashboard /> : <AuthForm />;
+  return user ? <Dashboard /> : <AuthForm onAdminClick={() => setShowAdmin(true)} />;
 }
 
 function App() {

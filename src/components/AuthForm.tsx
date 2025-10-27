@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-export const AuthForm: React.FC = () => {
+interface AuthFormProps {
+  onAdminClick?: () => void;
+}
+
+export const AuthForm: React.FC<AuthFormProps> = ({ onAdminClick }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -118,7 +122,7 @@ export const AuthForm: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-3">
           <button
             onClick={() => {
               setIsSignUp(!isSignUp);
@@ -130,6 +134,18 @@ export const AuthForm: React.FC = () => {
               ? 'Déjà un compte ? Se connecter'
               : 'Pas de compte ? Créer un compte'}
           </button>
+
+          {onAdminClick && (
+            <div className="pt-3 border-t border-slate-200">
+              <button
+                onClick={onAdminClick}
+                className="flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-medium transition w-full"
+              >
+                <Shield className="w-4 h-4" />
+                Admin Access
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
